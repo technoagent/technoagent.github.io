@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <title>after</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+  <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+  <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+  <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+</head>
+<style type="text/css">
+  body {
+    margin: 0;
+  }
+  .map {
+    width: 100%;
+    height: 100%;
+    position:fixed;
+  }
+</style>
+<body>
+<div id="map" class="map"></div>
+<script>
+  var styles = {
+    'Polygon': new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: 'blue',
+        lineDash: [4],
+        width: 3
+      }),
+      fill: new ol.style.Fill({
+        color: 'rgba(0, 0, 255, 0.1)'
+      })
+    })
+  };
+
+  var styleFunction = function(feature) {
+    return styles[feature.getGeometry().getType()];
+  };
+
+  var map = new ol.Map({
+    layers: [
+      new ol.layer.Tile({
+        source: new ol.source.OSM()
+      })
+    ],
+    target: 'map',
+    view: new ol.View({
+      projection: 'EPSG:4326',
+      center: [139.619373, 35.204085],
+      zoom: 8
+    })
+  });
+
+  var url = './kanto.geojson';
+  fetch(url).then(function(response) {
+    return response.json();
+  }).then(function(geojson) {
+    console.log(geojson);
+
+    var features = geojson.features;
+
+    prepareDividedArray(features, 1000, function (dividedFeatures) {
+      var vectorSource = new ol.source.Vector({
+        features: (new ol.format.GeoJSON()).readFeatures(dividedFeatures)
+      });
+      var vectorLayer = new ol.layer.Vector({
+        source: vectorSource,
+        style: styleFunction
+      });
+      map.addLayer(vectorLayer);
+    });
+
+  });
+
+  /**
+   * 配列をchunkSize分に分割してコールバック関数を適用する
+   *
+   * @param {Array} orgArr
+   * @param {number} chunkSize
+   * @param {function} callback 配列の要素に対して適用したい関数
+   * @param {function} lastCallback 配列の全要素に対する処理が終了した後に実行する関数
+   */
+  function prepareDividedArray(orgArr, chunkSize, callback, lastCallback) {
+
+    var idx = 0;
+    setTimeout(function () {
+      doDividedArray(orgArr.slice(0, idx += chunkSize));
+    }, 0);
+
+    function doDividedArray(arr) {
+      arr.forEach(callback);
+      if (arr.length === chunkSize) {
+        setTimeout(function () {
+          doDividedArray(orgArr.slice(idx, idx += chunkSize));
+        }, 0)
+      } else {
+        if (lastCallback) {
+          lastCallback();
+        }
+      }
+    }
+
+  }
+  
+</script>
+</body>
+</html>
