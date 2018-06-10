@@ -56,7 +56,6 @@
   fetch(url).then(function(response) {
     return response.json();
   }).then(function(geojson) {
-    console.log(geojson);
     var vectorSource = new ol.source.Vector({
       features: (new ol.format.GeoJSON()).readFeatures(geojson)
     });

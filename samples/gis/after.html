@@ -56,10 +56,7 @@
   fetch(url).then(function(response) {
     return response.json();
   }).then(function(geojson) {
-    console.log(geojson);
-
     var features = geojson.features;
-
     prepareDividedArray(features, 1000, function (dividedFeatures) {
       var vectorSource = new ol.source.Vector({
         features: (new ol.format.GeoJSON()).readFeatures(dividedFeatures)
